@@ -6,6 +6,9 @@ services:
       - "8000:8000"
     networks:
       - recommender_net
+    volumes:
+      - ./data/:/app/data/
+      - ./config/:/app/config/
   client:
     build: ./client
     depends_on:
@@ -13,7 +16,10 @@ services:
     networks:
       - recommender_net
     deploy:
-      replicas: 3 # nodos
+      replicas: 3 nodos
+    volumes:
+      - ./config/:/app/config/
+
 networks:
   recommender_net:
     driver: bridge
