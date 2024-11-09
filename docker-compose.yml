@@ -1,0 +1,19 @@
+version: "3"
+services:
+  server:
+    build: ./server
+    ports:
+      - "8000:8000"
+    networks:
+      - recommender_net
+  client:
+    build: ./client
+    depends_on:
+      - server
+    networks:
+      - recommender_net
+    deploy:
+      replicas: 3 # nodos
+networks:
+  recommender_net:
+    driver: bridge
