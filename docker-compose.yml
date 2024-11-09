@@ -16,7 +16,7 @@ services:
     networks:
       - recommender_net
     deploy:
-      replicas: 3 nodos
+      replicas: 3 #nodos
     volumes:
       - ./config/:/app/config/
 
