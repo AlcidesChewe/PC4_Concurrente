@@ -20,7 +20,7 @@ type ServerConfig struct {
 
 func LoadServerConfig() ServerConfig {
 	var cfg ServerConfig
-	data, err := ioutil.ReadFile("config/config.yaml")
+	data, err := ioutil.ReadFile("../config/server_config.yaml")
 	if err != nil {
 		log.Fatalf("Error reading server config file: %v", err)
 	}

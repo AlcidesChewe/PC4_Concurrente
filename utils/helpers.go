@@ -7,7 +7,7 @@ import (
 )
 
 func LoadData(filePath string) []Review {
-	filePath = "data/" + filePath
+	filePath = "../" + filePath
 	file, err := os.Open(filePath)
 	if err != nil {
 		panic(err)
