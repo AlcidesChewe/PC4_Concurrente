@@ -1,14 +1,15 @@
 FROM golang:1.20
 WORKDIR /app
 
-COPY ../go.mod ../go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
-COPY ../utils ../utils
-COPY ../config ../config
+COPY server/*.go ./server/
+COPY utils ./utils
+COPY config ./config
+COPY data ./data
 
-RUN go build -o server main.go
+RUN go build -o server ./server/main.go
 
 EXPOSE 8000
 

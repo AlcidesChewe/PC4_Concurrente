@@ -18,7 +18,7 @@ type ClientConfig struct {
 
 func LoadClientConfig() ClientConfig {
 	var cfg ClientConfig
-	data, err := ioutil.ReadFile("config.yaml")
+	data, err := ioutil.ReadFile("config/config.yaml")
 	if err != nil {
 		log.Fatalf("Error reading client config file: %v", err)
 	}

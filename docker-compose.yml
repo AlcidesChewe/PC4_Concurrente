@@ -1,7 +1,8 @@
-version: "3"
 services:
   server:
-    build: ./server
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile
     ports:
       - "8000:8000"
     networks:
@@ -10,13 +11,15 @@ services:
       - ./data/:/app/data/
       - ./config/:/app/config/
   client:
-    build: ./client
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
     depends_on:
       - server
     networks:
       - recommender_net
     deploy:
-      replicas: 3 #nodos
+      replicas: 3
     volumes:
       - ./config/:/app/config/
 
