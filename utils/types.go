@@ -1,10 +1,16 @@
 package utils
 
+type ServerMessage struct {
+	Message   string   `json:"message,omitempty"`
+	Partition []Review `json:"partition,omitempty"`
+}
+
 type Review struct {
-	ReviewID   string `json:"review_id"`
-	ProductID  string `json:"product_id"`
-	ReviewerID string `json:"reviewer_id"`
-	Stars      int    `json:"stars"`
+	ReviewID        string `json:"review_id"`
+	ProductID       string `json:"product_id"`
+	ReviewerID      string `json:"reviewer_id"`
+	Stars           int    `json:"stars"`
+	ProductCategory string `json:"product_category"`
 	// Add other fields if needed
 }
 

@@ -4,4 +4,4 @@ server:
 
 dataset:
   path: "data/amazon_reviews.csv"
-  partitions: 10
+  partitions: 30

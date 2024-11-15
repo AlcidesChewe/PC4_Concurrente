@@ -1,59 +1,63 @@
+// client/main.go
 package main
 
 import (
-	"bufio"
 	"encoding/json"
-	"fmt"
+	"log"
 	"net"
+	"runtime"
 
 	"recomendador/config"
 	"recomendador/utils"
 )
 
 func main() {
+	log.Println("Client is starting...")
+
 	// Load client configuration
 	cfg := config.LoadClientConfig()
+	log.Printf("Loaded client configuration: %+v\n", cfg)
 
 	// Connect to the server
 	conn, err := net.Dial("tcp", cfg.Server.Address)
 	if err != nil {
-		fmt.Println("Error connecting to server:", err)
-		return
+		log.Fatalf("Error connecting to server: %v", err)
 	}
 	defer conn.Close()
+	log.Println("Connected to server.")
 
 	// Receive data from server
-	reader := bufio.NewReader(conn)
-	dataBytes, err := reader.ReadBytes('\n')
+	decoder := json.NewDecoder(conn)
+	var serverMsg utils.ServerMessage
+	err = decoder.Decode(&serverMsg)
 	if err != nil {
-		fmt.Println("Error reading data:", err)
+		log.Fatalf("Error decoding server message: %v", err)
+	}
+	log.Printf("Received message from server: %+v\n", serverMsg)
+
+	if serverMsg.Message == "NO_MORE_WORK" {
+		log.Println("No more work assigned by server")
 		return
 	}
 
-	// Check for "NO_MORE_WORK" message
-	var message map[string]string
-	err = json.Unmarshal(dataBytes, &message)
-	if err == nil && message["message"] == "NO_MORE_WORK" {
-		fmt.Println("No more work assigned by server")
-		return
-	}
-
-	// Unmarshal partition data
-	var partition []utils.Review
-	err = json.Unmarshal(dataBytes, &partition)
-	if err != nil {
-		fmt.Println("Error unmarshalling partition data:", err)
-		return
-	}
+	partition := serverMsg.Partition
+	log.Printf("Received partition with %d reviews.\n", len(partition))
 
 	// Perform computation
+	log.Println("Starting computation...")
 	results := utils.PerformComputation(partition)
+	log.Println("Computation completed.")
+
+	// Log memory usage
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	log.Printf("Memory Usage: Alloc = %v MiB", m.Alloc/1024/1024)
 
 	// Send results back to server
-	resultBytes, err := json.Marshal(results)
+	encoder := json.NewEncoder(conn)
+	err = encoder.Encode(results)
 	if err != nil {
-		fmt.Println("Error marshalling results:", err)
-		return
+		log.Fatalf("Error encoding results: %v", err)
 	}
-	conn.Write(resultBytes)
+	log.Println("Results sent to server.")
 }

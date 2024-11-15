@@ -22,7 +22,7 @@ WORKDIR /app/server
 # Build the server binary
 RUN go build -o server .
 
-# Expose the server port
+# Expose the TCP port
 EXPOSE 8000
 
 # Command to run when starting the container

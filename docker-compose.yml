@@ -20,6 +20,9 @@ services:
       - recommender_net
     deploy:
       replicas: 3
+      resources:
+        limits:
+          memory: 1g
     volumes:
       - ./config/:/app/config/
 
