@@ -60,4 +60,6 @@ func main() {
 		log.Fatalf("Error encoding results: %v", err)
 	}
 	log.Println("Results sent to server.")
+	conn.Close()
+	log.Println("Connection closed.")
 }

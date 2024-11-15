@@ -6,11 +6,11 @@ type ServerMessage struct {
 }
 
 type Review struct {
-	ReviewID        string `json:"review_id"`
-	ProductID       string `json:"product_id"`
-	ReviewerID      string `json:"reviewer_id"`
-	Stars           int    `json:"stars"`
-	ProductCategory string `json:"product_category"`
+	ReviewID        string  `json:"review_id"`
+	ProductID       string  `json:"product_id"`
+	ReviewerID      string  `json:"reviewer_id"`
+	Stars           float64 `json:"stars"`
+	ProductCategory string  `json:"product_category"`
 	// Add other fields if needed
 }
 

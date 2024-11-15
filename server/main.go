@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 
 	"recomendador/config"
@@ -50,7 +51,6 @@ func main() {
 }
 
 func startTCPServer(cfg config.ServerConfig) {
-	// Start listening on TCP port
 	ln, err := net.Listen("tcp", ":"+cfg.Server.Port)
 	if err != nil {
 		fmt.Println("Error starting TCP server:", err)
@@ -61,8 +61,7 @@ func startTCPServer(cfg config.ServerConfig) {
 
 	var wg sync.WaitGroup
 
-	expectedClients := cfg.Server.MaxClients
-	for i := 0; i < expectedClients; i++ {
+	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			fmt.Println("Error accepting connection:", err)
@@ -70,11 +69,18 @@ func startTCPServer(cfg config.ServerConfig) {
 		}
 		wg.Add(1)
 		go handleClient(conn, &wg)
+
+		// Exit condition: all partitions have been assigned
+		partitionMutex.Lock()
+		done := partitionIndex >= len(partitions)
+		partitionMutex.Unlock()
+		if done {
+			break
+		}
 	}
 
-	// All expected clients have connected
+	// Wait for all clients to finish
 	wg.Wait()
-	// ????? processAggregatedResults()
 }
 
 func startCLI() {
@@ -83,16 +89,36 @@ func startCLI() {
 	)
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		fmt.Print("Enter product category (or type 'exit' to quit): ")
+		fmt.Print("Enter product category (type 'categories' to list, 'exit' to quit): ")
 		if !scanner.Scan() {
 			break
 		}
 		category := scanner.Text()
+		category = strings.ToLower(strings.TrimSpace(category))
+
 		if category == "exit" {
 			fmt.Println("Exiting CLI.")
 			break
+		} else if category == "categories" {
+			displayAvailableCategories()
+			continue
 		}
+
 		displayRecommendations(category)
+	}
+}
+
+func displayAvailableCategories() {
+	recommendationsMu.RLock()
+	defer recommendationsMu.RUnlock()
+	if len(recommendations) == 0 {
+		fmt.Println("No categories available.")
+		return
+	}
+
+	fmt.Println("Available categories:")
+	for category := range recommendations {
+		fmt.Printf("- %s\n", category)
 	}
 }
 
@@ -156,6 +182,11 @@ func handleClient(conn net.Conn, wg *sync.WaitGroup) {
 	}
 	fmt.Printf("Sent partition data to client %s\n", clientAddr)
 
+	// Ensure the connection is flushed
+	if tcpConn, ok := conn.(*net.TCPConn); ok {
+		tcpConn.CloseWrite()
+	}
+
 	// Receive results from client
 	decoder := json.NewDecoder(conn)
 	var results utils.ResultData
@@ -213,6 +244,8 @@ func processAggregatedResults() {
 		}
 	}
 
+	// log
+	fmt.Printf("Aggregated Results: %+v\n", aggregatedResults)
 	// Convert map to slice and store in recommendations variable
 	recommendationsMu.Lock()
 	recommendations = make(map[string][]string)
@@ -240,4 +273,16 @@ func processAggregatedResults() {
 	recommendationsMu.Unlock()
 
 	fmt.Println("Recommendations processing completed.")
+
+	// **Add this block to log the recommendations**
+	recommendationsMu.RLock()
+	defer recommendationsMu.RUnlock()
+	fmt.Println("Generated Recommendations:")
+	if len(recommendations) == 0 {
+		fmt.Println("No recommendations were generated.")
+	} else {
+		for category, recs := range recommendations {
+			fmt.Printf("Category: '%s', Recommendations: %v\n", category, recs)
+		}
+	}
 }

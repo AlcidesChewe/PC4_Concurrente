@@ -2,9 +2,11 @@ package utils
 
 import (
 	"encoding/csv"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var productCategoryMap map[string]string // Map[productID]productCategory
@@ -30,31 +32,34 @@ func LoadData(filePath string) []Review {
 	var reviews []Review
 	productCategoryMap = make(map[string]string)
 
-	for _, record := range records[1:] { // Assuming first row is header
-		// Adjust indices based on your CSV file structure
-		// For example, assuming:
-		// record[0]: review_id
-		// record[1]: product_id
-		// record[2]: reviewer_id
-		// record[3]: stars
-		// record[4]: product_category
-
-		stars, _ := strconv.Atoi(record[3])
-		review := Review{
-			ReviewID:        record[0],
-			ProductID:       record[1],
-			ReviewerID:      record[2],
-			Stars:           stars,
-			ProductCategory: record[4],
+	// Assuming the first row is the header
+	for _, record := range records[1:] {
+		i_stars, err := strconv.Atoi(record[4])
+		if err != nil {
+			log.Printf("Error parsing stars for review ID %s: %v", record[0], err)
+			continue // Skip this record if stars cannot be parsed
 		}
+		stars := float64(i_stars)
+
+		review := Review{
+			ReviewID:        record[1],
+			ProductID:       record[2],
+			ReviewerID:      record[3],
+			Stars:           stars,
+			ProductCategory: strings.ToLower(strings.TrimSpace(record[8])),
+		}
+		log.Printf("Parsed review: %+v\n", review)
 		reviews = append(reviews, review)
 		productCategoryMap[review.ProductID] = review.ProductCategory
 	}
+
 	return reviews
 }
 
 func GetProductCategory(productID string) string {
-	return productCategoryMap[productID]
+	category := productCategoryMap[productID]
+	fmt.Printf("Product ID %s has category '%s'\n", productID, category) // **Add this line**
+	return category
 }
 
 func SplitData(data []Review, partitions int) [][]Review {
@@ -70,4 +75,3 @@ func SplitData(data []Review, partitions int) [][]Review {
 	}
 	return result
 }
-

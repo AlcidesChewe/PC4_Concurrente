@@ -10,6 +10,8 @@ services:
     volumes:
       - ./data/:/app/data/
       - ./config/:/app/config/
+    stdin_open: true # keep stdin open
+    tty: true # allocate pseudo-TTY
   client:
     build:
       context: .
@@ -25,6 +27,7 @@ services:
           memory: 1g
     volumes:
       - ./config/:/app/config/
+    restart: "no"
 
 networks:
   recommender_net:
