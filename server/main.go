@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"recomendador/config"
 	"recomendador/utils"
@@ -52,6 +54,9 @@ func main() {
 
 func startTCPServer(cfg config.ServerConfig) {
 	ln, err := net.Listen("tcp", ":"+cfg.Server.Port)
+	ln.(*net.TCPListener).SetDeadline(
+		time.Now().Add(time.Minute * 1),
+	) // TODO: change timeout to 10min?
 	if err != nil {
 		fmt.Println("Error starting TCP server:", err)
 		return
@@ -80,6 +85,7 @@ func startTCPServer(cfg config.ServerConfig) {
 	}
 
 	// Wait for all clients to finish
+	clientWg.Wait()
 	wg.Wait()
 }
 
@@ -152,9 +158,14 @@ func displayRecommendations(category string) {
 
 // handleClient manages the communication with a client
 
+var clientWg sync.WaitGroup
+
 func handleClient(conn net.Conn, wg *sync.WaitGroup) {
 	defer wg.Done()
 	defer conn.Close()
+
+	clientWg.Add(1)
+	defer clientWg.Done()
 
 	clientAddr := conn.RemoteAddr().String()
 	fmt.Printf("Client connected: %s\n", clientAddr)
@@ -183,16 +194,20 @@ func handleClient(conn net.Conn, wg *sync.WaitGroup) {
 	fmt.Printf("Sent partition data to client %s\n", clientAddr)
 
 	// Ensure the connection is flushed
-	if tcpConn, ok := conn.(*net.TCPConn); ok {
-		tcpConn.CloseWrite()
-	}
+	//if tcpConn, ok := conn.(*net.TCPConn); ok {
+	//tcpConn.CloseWrite()
+	//}
 
 	// Receive results from client
 	decoder := json.NewDecoder(conn)
 	var results utils.ResultData
 	err = decoder.Decode(&results)
 	if err != nil {
-		fmt.Printf("Error decoding client results from %s: %v\n", clientAddr, err)
+		if err == io.EOF {
+			fmt.Printf("Client %s closed the connection.\n", clientAddr)
+		} else {
+			fmt.Printf("Error decoding client results from %s: %v\n", clientAddr, err)
+		}
 		return
 	}
 	fmt.Printf("Received results from client %s\n", clientAddr)
@@ -245,7 +260,7 @@ func processAggregatedResults() {
 	}
 
 	// log
-	fmt.Printf("Aggregated Results: %+v\n", aggregatedResults)
+	// fmt.Printf("Aggregated Results: %+v\n", aggregatedResults)
 	// Convert map to slice and store in recommendations variable
 	recommendationsMu.Lock()
 	recommendations = make(map[string][]string)

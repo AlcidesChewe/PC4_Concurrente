@@ -4,15 +4,25 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var productCategoryMap map[string]string // Map[productID]productCategory
 
+func ShuffleData(data []Review) {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(data), func(i, j int) {
+		data[i], data[j] = data[j], data[i]
+	})
+}
+
 func LoadData(filePath string) []Review {
 	filePath = "/app/" + filePath
+	fmt.Printf("Attempting to load data from %s\n", filePath)
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Fatalf("Error opening data file %s: %v", filePath, err)
@@ -48,7 +58,7 @@ func LoadData(filePath string) []Review {
 			Stars:           stars,
 			ProductCategory: strings.ToLower(strings.TrimSpace(record[8])),
 		}
-		log.Printf("Parsed review: %+v\n", review)
+		// log.Printf("Parsed review: %+v\n", review)
 		reviews = append(reviews, review)
 		productCategoryMap[review.ProductID] = review.ProductCategory
 	}
@@ -63,6 +73,7 @@ func GetProductCategory(productID string) string {
 }
 
 func SplitData(data []Review, partitions int) [][]Review {
+	// ShuffleData(data) // Shuffle data before splitting
 	var result [][]Review
 	partitionSize := (len(data) + partitions - 1) / partitions
 

@@ -60,6 +60,9 @@ func main() {
 		log.Fatalf("Error encoding results: %v", err)
 	}
 	log.Println("Results sent to server.")
+	if tcpConn, ok := conn.(*net.TCPConn); ok {
+		tcpConn.CloseWrite()
+	}
 	conn.Close()
 	log.Println("Connection closed.")
 }

@@ -26,7 +26,7 @@ func PerformComputation(partition []Review) ResultData {
 		recommendations[userID] = recs
 
 		// **Add this line to log recommendations per user**
-		fmt.Printf("User %s recommendations: %v\n", userID, recs)
+		// fmt.Printf("User %s recommendations: %v\n", userID, recs)
 	}
 
 	return ResultData{Recommendations: recommendations}
@@ -91,9 +91,10 @@ func recommendProducts(
 		// Compute the weighted average
 		if totalSim[productID] != 0 {
 			score := scores[productID] / totalSim[productID]
-			if score >= 4.0 { // Threshold for recommendation
+			if score >= 2.0 { // Threshold for recommendation
 				recommendations = append(recommendations, productID)
 			}
+			fmt.Printf("User %s, Product %s, Score: %f\n", targetUserID, productID, score)
 		}
 	}
 
